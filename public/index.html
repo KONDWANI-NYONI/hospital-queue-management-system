@@ -1675,7 +1675,7 @@
                 try {
                     const response = await fetch(`${this.API_BASE}/queue`);
                     this.patients = await response.json();
-                    this.refreshAllDisplays();
+                    this.refreshOPDDisplay();
                 } catch (error) {
                     console.error('Error loading patients:', error);
                 }
@@ -2025,6 +2025,9 @@
                                 <div class="action-buttons">
                                     <button class="action-btn" onclick="queueSystem.viewPatientDetails(${patient.id})">
                                         <i class="fas fa-eye"></i> View
+                                    </button>
+                                    <button class="action-btn delete-btn" onclick="queueSystem.deletePatient(${patient.id})">
+                                        <i class="fas fa-trash"></i> Delete
                                     </button>
                                 </div>
                             </td>
