@@ -1989,11 +1989,11 @@
                 // Filter patients
                 let filteredPatients = this.patients;
                 if (filterStation !== 'ALL') {
-                    filteredPatients = this.patients.filter(p => p.currentStation === filterStation);
+                    filteredPatients = this.patients.filter(p => p.station === filterStation);
                 }
                 
                 // Sort by registration time (newest first)
-                filteredPatients.sort((a, b) => new Date(b.registeredAt) - new Date(a.registeredAt));
+                filteredPatients.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                 
                 // Display
                 if (filteredPatients.length === 0) {
@@ -2010,17 +2010,17 @@
                     filteredPatients.forEach(patient => {
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td><span class="ticket-number">${patient.ticketNo}</span></td>
+                            <td><span class="ticket-number">${patient.id}</span></td>
                             <td>
                                 <div class="patient-info">
                                     <div class="patient-name">${patient.name}</div>
-                                    <div class="patient-details">${patient.age}y ${patient.gender} • ${patient.phone || 'No phone'}</div>
+                                    <div class="patient-details">N/A • N/A • ${patient.phone || 'No phone'}</div>
                                 </div>
                             </td>
-                            <td><span class="priority-badge priority-${patient.priority}">${patient.priority}</span></td>
-                            <td>${patient.currentStation}</td>
-                            <td><span class="status-badge status-${patient.status.toLowerCase().replace('_', '-')}">${patient.status.replace('_', ' ')}</span></td>
-                            <td>${this.getTimeAgo(patient.registeredAt)}</td>
+                            <td><span class="priority-badge priority-normal">${patient.condition}</span></td>
+                            <td>${patient.station}</td>
+                            <td><span class="status-badge status-${patient.status}">${patient.status}</span></td>
+                            <td>${this.getTimeAgo(patient.created_at)}</td>
                             <td>
                                 <div class="action-buttons">
                                     <button class="action-btn" onclick="queueSystem.viewPatientDetails(${patient.id})">
