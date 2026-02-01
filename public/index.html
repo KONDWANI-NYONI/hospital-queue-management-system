@@ -1,0 +1,2792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mtendere Mission Hospital - Complete Queue System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a5f7a;
+            --primary-light: #2d8f9e;
+            --primary-dark: #144c63;
+            --secondary: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --info: #3498db;
+            --opd-color: #9b59b6;
+            --lab-color: #e67e22;
+            --pharmacy-color: #16a085;
+            --radiology-color: #34495e;
+            --cashier-color: #95a5a6;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --border: #e0e0e0;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+
+        .login-card h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .login-card p {
+            color: var(--gray);
+            margin-bottom: 30px;
+        }
+
+        .station-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .station-card {
+            background: var(--light);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .station-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+        }
+
+        .station-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 24px;
+            color: white;
+        }
+
+        .station-card.opd .station-icon { background: var(--opd-color); }
+        .station-card.triage .station-icon { background: var(--primary); }
+        .station-card.clinic .station-icon { background: var(--secondary); }
+        .station-card.lab .station-icon { background: var(--lab-color); }
+        .station-card.pharmacy .station-icon { background: var(--pharmacy-color); }
+        .station-card.radiology .station-icon { background: var(--radiology-color); }
+        .station-card.cashier .station-icon { background: var(--cashier-color); }
+
+        .station-card h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .station-card p {
+            font-size: 13px;
+            color: var(--gray);
+            margin: 0;
+        }
+
+        /* Main System - Hidden by default */
+        .system-screen {
+            display: none;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: var(--radius);
+            padding: 20px 30px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header.opd { background: linear-gradient(135deg, var(--opd-color) 0%, #8e44ad 100%); }
+        .header.lab { background: linear-gradient(135deg, var(--lab-color) 0%, #d35400 100%); }
+        .header.pharmacy { background: linear-gradient(135deg, var(--pharmacy-color) 0%, #1abc9c 100%); }
+        .header.radiology { background: linear-gradient(135deg, var(--radiology-color) 0%, #2c3e50 100%); }
+        .header.cashier { background: linear-gradient(135deg, var(--cashier-color) 0%, #7f8c8d 100%); }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 1;
+        }
+
+        .logo {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .logo i {
+            font-size: 28px;
+        }
+
+        .station-info h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .station-info .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            z-index: 1;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .system-status {
+            text-align: right;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2ecc71;
+            animation: pulse 2s infinite;
+        }
+
+        .datetime {
+            font-size: 20px;
+            font-weight: 300;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 1px;
+        }
+
+        .date {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-top: 2px;
+        }
+
+        /* Main Layout */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+            min-height: calc(100vh - 180px);
+        }
+
+        @media (max-width: 1400px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* OPD Registration Screen Styles */
+        .registration-panel {
+            background: white;
+            border-radius: var(--radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-header h2 {
+            color: var(--primary);
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .panel-header.opd h2 { color: var(--opd-color); }
+        .panel-header.lab h2 { color: var(--lab-color); }
+        .panel-header.pharmacy h2 { color: var(--pharmacy-color); }
+
+        .panel-badge {
+            background: var(--primary-light);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .opd .panel-badge { background: var(--opd-color); }
+        .lab .panel-badge { background: var(--lab-color); }
+        .pharmacy .panel-badge { background: var(--pharmacy-color); }
+
+        /* Form Styles */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .form-control {
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(45, 143, 158, 0.1);
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-wrapper::after {
+            content: '▼';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+            pointer-events: none;
+            font-size: 12px;
+        }
+
+        .actions-row {
+            display: flex;
+            gap: 12px;
+            padding-top: 25px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(26, 95, 122, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(26, 95, 122, 0.25);
+        }
+
+        .btn-opd {
+            background: linear-gradient(135deg, var(--opd-color) 0%, #8e44ad 100%);
+            color: white;
+        }
+
+        .btn-lab {
+            background: linear-gradient(135deg, var(--lab-color) 0%, #d35400 100%);
+            color: white;
+        }
+
+        .btn-pharmacy {
+            background: linear-gradient(135deg, var(--pharmacy-color) 0%, #1abc9c 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+            border: 1.5px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #f0f2f5;
+            border-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        /* Queue Tables */
+        .queue-section {
+            background: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .queue-section:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h3 {
+            color: var(--primary);
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .count-badge {
+            background: var(--primary-light);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .queue-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .queue-table thead {
+            background: #f8fafc;
+        }
+
+        .queue-table th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .queue-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            vertical-align: middle;
+        }
+
+        .queue-table tbody tr {
+            transition: var(--transition);
+        }
+
+        .queue-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .ticket-number {
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 14px;
+        }
+
+        .patient-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .patient-name {
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .patient-details {
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .status-waiting {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-called {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-inservice {
+            background: #d4edda;
+            color: #155724;
+            animation: pulse 2s infinite;
+        }
+
+        .status-completed {
+            background: #e8e8e8;
+            color: #666;
+        }
+
+        .priority-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .priority-1 {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .priority-2 {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .priority-3 {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--gray);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state h4 {
+            font-size: 16px;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        /* Station Routing Panel */
+        .routing-panel {
+            background: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+
+        .routing-panel h3 {
+            color: var(--primary);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .routing-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .form-row .control-group {
+            flex: 1;
+        }
+
+        .station-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .station-option {
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .station-option:hover {
+            border-color: var(--primary-light);
+            background: #f8fafc;
+        }
+
+        .station-option.selected {
+            border-color: var(--primary);
+            background: #e8f4f8;
+            color: var(--primary);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+        }
+
+        .stats-card h3 {
+            color: var(--primary);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Activity Feed */
+        .activity-feed {
+            background: white;
+            border-radius: var(--radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+            flex: 1;
+        }
+
+        .activity-feed h3 {
+            color: var(--primary);
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .activity-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .activity-icon i {
+            color: var(--primary);
+            font-size: 14px;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            font-size: 13px;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+
+        .activity-time {
+            font-size: 11px;
+            color: var(--gray);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transform: translateX(100%);
+            animation: slideIn 0.3s ease forwards;
+            border-left: 4px solid var(--primary);
+        }
+
+        .toast.success {
+            border-left-color: var(--secondary);
+        }
+
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+
+        .toast.warning {
+            border-left-color: var(--warning);
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--dark);
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: var(--gray);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+            padding: 0;
+            opacity: 0.5;
+            transition: var(--transition);
+        }
+
+        .toast-close:hover {
+            opacity: 1;
+            color: var(--danger);
+        }
+
+        /* Station Filter */
+        .station-filter {
+            background: white;
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            color: var(--gray);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+                padding: 20px;
+            }
+            
+            .header-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .system-status {
+                text-align: center;
+            }
+            
+            .status-indicator {
+                justify-content: center;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .actions-row {
+                flex-wrap: wrap;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .queue-table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .station-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes slideIn {
+            to { transform: translateX(0); }
+        }
+
+        @keyframes slideOut {
+            to { transform: translateX(100%); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login/Screen Selection -->
+    <div class="login-screen" id="login-screen">
+        <div class="login-card">
+            <div class="logo">
+                <i class="fas fa-hospital-alt"></i>
+            </div>
+            <h1>Mtendere Mission Hospital</h1>
+            <p>Select Station to Continue</p>
+            
+            <div class="station-grid">
+                <!-- OPD Registration Station -->
+                <div class="station-card opd" onclick="selectStation('OPD')">
+                    <div class="station-icon">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <h3>OPD Registration</h3>
+                    <p>Patient registration and triage</p>
+                </div>
+                
+                <!-- Triage Station -->
+                <div class="station-card triage" onclick="selectStation('TRIAGE')">
+                    <div class="station-icon">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                    <h3>Triage</h3>
+                    <p>Emergency assessment</p>
+                </div>
+                
+                <!-- Clinic Station -->
+                <div class="station-card clinic" onclick="selectStation('CLINIC')">
+                    <div class="station-icon">
+                        <i class="fas fa-clinic-medical"></i>
+                    </div>
+                    <h3>Clinic</h3>
+                    <p>Medical consultation</p>
+                </div>
+                
+                <!-- Laboratory -->
+                <div class="station-card lab" onclick="selectStation('LAB')">
+                    <div class="station-icon">
+                        <i class="fas fa-flask"></i>
+                    </div>
+                    <h3>Laboratory</h3>
+                    <p>Medical tests and analysis</p>
+                </div>
+                
+                <!-- Pharmacy -->
+                <div class="station-card pharmacy" onclick="selectStation('PHARMACY')">
+                    <div class="station-icon">
+                        <i class="fas fa-pills"></i>
+                    </div>
+                    <h3>Pharmacy</h3>
+                    <p>Medication dispensing</p>
+                </div>
+                
+                <!-- Radiology -->
+                <div class="station-card radiology" onclick="selectStation('RADIOLOGY')">
+                    <div class="station-icon">
+                        <i class="fas fa-x-ray"></i>
+                    </div>
+                    <h3>Radiology</h3>
+                    <p>Imaging services</p>
+                </div>
+                
+                <!-- Cashier -->
+                <div class="station-card cashier" onclick="selectStation('CASHIER')">
+                    <div class="station-icon">
+                        <i class="fas fa-cash-register"></i>
+                    </div>
+                    <h3>Cashier</h3>
+                    <p>Billing and payments</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OPD Registration System (Hidden by default) -->
+    <div class="container system-screen" id="opd-system">
+        <div class="header opd">
+            <div class="brand">
+                <div class="logo">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <div class="station-info">
+                    <h1>OPD Registration</h1>
+                    <div class="subtitle">Patient Registration & Queue Management</div>
+                </div>
+            </div>
+            <div class="header-controls">
+                <button class="back-btn" onclick="goToLogin()">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Stations
+                </button>
+                <div class="system-status">
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        System Online
+                    </div>
+                    <div class="datetime" id="opd-time">00:00:00</div>
+                    <div class="date" id="opd-date">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="main-content">
+                <!-- Patient Registration Form -->
+                <div class="registration-panel opd">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-user-plus"></i> New Patient Registration</h2>
+                        <div class="panel-badge">OPD</div>
+                    </div>
+                    
+                    <form id="patient-registration-form">
+                        <div class="form-grid">
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <i class="fas fa-user"></i> Patient Name
+                                </label>
+                                <input type="text" class="form-control" id="opd-patient-name" required>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <i class="fas fa-birthday-cake"></i> Age
+                                </label>
+                                <input type="number" class="form-control" id="opd-patient-age" min="1" max="120" required>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <i class="fas fa-venus-mars"></i> Gender
+                                </label>
+                                <div class="select-wrapper">
+                                    <select class="form-control" id="opd-patient-gender" required>
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <i class="fas fa-phone"></i> Phone Number
+                                </label>
+                                <input type="tel" class="form-control" id="opd-patient-phone">
+                            </div>
+                            
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <i class="fas fa-exclamation-triangle"></i> Priority Level
+                                </label>
+                                <div class="select-wrapper">
+                                    <select class="form-control" id="opd-patient-priority">
+                                        <option value="3">Normal (3)</option>
+                                        <option value="2">Urgent (2)</option>
+                                        <option value="1">Emergency (1)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <i class="fas fa-notes-medical"></i> Chief Complaint
+                                </label>
+                                <textarea class="form-control" id="opd-patient-complaint" rows="3" placeholder="Describe the patient's main complaint..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- Station Routing -->
+                        <div class="routing-panel">
+                            <h3><i class="fas fa-route"></i> Route to Station</h3>
+                            <div class="routing-form">
+                                <div class="station-options">
+                                    <div class="station-option" data-station="TRIAGE" onclick="selectInitialStation('TRIAGE')">
+                                        <i class="fas fa-stethoscope"></i>
+                                        Triage
+                                    </div>
+                                    <div class="station-option" data-station="CLINIC" onclick="selectInitialStation('CLINIC')">
+                                        <i class="fas fa-clinic-medical"></i>
+                                        Clinic
+                                    </div>
+                                    <div class="station-option" data-station="LAB" onclick="selectInitialStation('LAB')">
+                                        <i class="fas fa-flask"></i>
+                                        Lab
+                                    </div>
+                                    <div class="station-option" data-station="PHARMACY" onclick="selectInitialStation('PHARMACY')">
+                                        <i class="fas fa-pills"></i>
+                                        Pharmacy
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="actions-row">
+                            <button type="button" class="btn btn-primary" onclick="registerPatient()">
+                                <i class="fas fa-save"></i> Register Patient
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="clearRegistrationForm()">
+                                <i class="fas fa-eraser"></i> Clear Form
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Today's Registered Patients -->
+                <div class="queue-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-users"></i> Today's Registrations</h3>
+                        <div class="count-badge" id="registered-count">0</div>
+                    </div>
+                    
+                    <div id="opd-filter-buttons" class="filter-buttons">
+                        <!-- Filters will be added by JavaScript -->
+                    </div>
+                    
+                    <table class="queue-table">
+                        <thead>
+                            <tr>
+                                <th>Ticket #</th>
+                                <th>Patient Info</th>
+                                <th>Priority</th>
+                                <th>Station</th>
+                                <th>Status</th>
+                                <th>Registered</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registered-tbody">
+                            <!-- Patients will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <!-- OPD Statistics -->
+                <div class="stats-card">
+                    <h3><i class="fas fa-chart-bar"></i> OPD Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="opd-total">0</div>
+                            <div class="stat-label">Total Patients</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="opd-triage">0</div>
+                            <div class="stat-label">In Triage</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="opd-clinic">0</div>
+                            <div class="stat-label">In Clinic</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="opd-lab">0</div>
+                            <div class="stat-label">In Lab</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="routing-panel">
+                    <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                    <div class="routing-form">
+                        <div class="form-row">
+                            <div class="control-group">
+                                <label class="control-label">Ticket Number</label>
+                                <input type="text" class="form-control" id="reassign-ticket" placeholder="Enter ticket #">
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">New Station</label>
+                                <div class="select-wrapper">
+                                    <select class="form-control" id="reassign-station">
+                                        <option value="TRIAGE">Triage</option>
+                                        <option value="CLINIC">Clinic</option>
+                                        <option value="LAB">Lab</option>
+                                        <option value="PHARMACY">Pharmacy</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button class="btn btn-warning" onclick="reassignPatient()">
+                            <i class="fas fa-exchange-alt"></i> Reassign Patient
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Activity Feed -->
+                <div class="activity-feed">
+                    <h3><i class="fas fa-history"></i> Recent Activity</h3>
+                    <div class="activity-list" id="opd-activity-list">
+                        <!-- Activity items will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lab System -->
+    <div class="container system-screen" id="lab-system">
+        <div class="header lab">
+            <div class="brand">
+                <div class="logo">
+                    <i class="fas fa-flask"></i>
+                </div>
+                <div class="station-info">
+                    <h1>Laboratory</h1>
+                    <div class="subtitle">Test Processing & Results</div>
+                </div>
+            </div>
+            <div class="header-controls">
+                <button class="back-btn" onclick="goToLogin()">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Stations
+                </button>
+                <div class="system-status">
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        System Online
+                    </div>
+                    <div class="datetime" id="lab-time">00:00:00</div>
+                    <div class="date" id="lab-date">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="main-content">
+                <!-- Lab Control Panel -->
+                <div class="control-panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-play-circle"></i> Lab Control Panel</h2>
+                        <div class="panel-badge">LAB</div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="control-group">
+                            <label class="control-label">
+                                <i class="fas fa-user-md"></i> Technician Name
+                            </label>
+                            <input type="text" class="form-control" id="lab-technician" placeholder="Enter technician name">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">
+                                <i class="fas fa-flask"></i> Test Type
+                            </label>
+                            <div class="select-wrapper">
+                                <select class="form-control" id="lab-test-type">
+                                    <option value="BLOOD_TEST">Blood Test</option>
+                                    <option value="URINE_TEST">Urine Test</option>
+                                    <option value="XRAY">X-Ray</option>
+                                    <option value="ULTRASOUND">Ultrasound</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="actions-row">
+                        <button class="btn btn-lab" onclick="labCallNextPatient()">
+                            <i class="fas fa-user-plus"></i> Call Next Patient
+                        </button>
+                        <button class="btn btn-success" onclick="labCompleteAndRoute()">
+                            <i class="fas fa-check-circle"></i> Complete & Route
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Lab Tests -->
+                <div class="queue-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-microscope"></i> Active Tests</h3>
+                        <div class="count-badge" id="lab-active-count">0</div>
+                    </div>
+                    
+                    <table class="queue-table">
+                        <thead>
+                            <tr>
+                                <th>Ticket #</th>
+                                <th>Patient</th>
+                                <th>Test Type</th>
+                                <th>Technician</th>
+                                <th>Started</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lab-active-tbody">
+                            <!-- Active tests will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Lab Waiting Queue -->
+                <div class="queue-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-clock"></i> Waiting Queue</h3>
+                        <div class="count-badge" id="lab-waiting-count">0</div>
+                    </div>
+                    
+                    <table class="queue-table">
+                        <thead>
+                            <tr>
+                                <th>Ticket #</th>
+                                <th>Patient</th>
+                                <th>Priority</th>
+                                <th>Requested</th>
+                                <th>Wait Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lab-waiting-tbody">
+                            <!-- Waiting patients will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Lab Sidebar -->
+            <div class="sidebar">
+                <!-- Lab Statistics -->
+                <div class="stats-card">
+                    <h3><i class="fas fa-chart-bar"></i> Lab Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="lab-tests-today">0</div>
+                            <div class="stat-label">Tests Today</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="lab-tests-completed">0</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="lab-tests-pending">0</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="lab-queue-count">0</div>
+                            <div class="stat-label">In Queue</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Test Types Breakdown -->
+                <div class="routing-panel">
+                    <h3><i class="fas fa-chart-pie"></i> Test Types Today</h3>
+                    <div id="lab-test-types">
+                        <!-- Test types will be added here -->
+                    </div>
+                </div>
+
+                <!-- Lab Activity Feed -->
+                <div class="activity-feed">
+                    <h3><i class="fas fa-history"></i> Lab Activity</h3>
+                    <div class="activity-list" id="lab-activity-list">
+                        <!-- Activity items will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pharmacy System -->
+    <div class="container system-screen" id="pharmacy-system">
+        <div class="header pharmacy">
+            <div class="brand">
+                <div class="logo">
+                    <i class="fas fa-pills"></i>
+                </div>
+                <div class="station-info">
+                    <h1>Pharmacy</h1>
+                    <div class="subtitle">Medication Dispensing</div>
+                </div>
+            </div>
+            <div class="header-controls">
+                <button class="back-btn" onclick="goToLogin()">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Stations
+                </button>
+                <div class="system-status">
+                    <div class="status-indicator">
+                        <div class="status-dot"></div>
+                        System Online
+                    </div>
+                    <div class="datetime" id="pharmacy-time">00:00:00</div>
+                    <div class="date" id="pharmacy-date">Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="main-content">
+                <!-- Pharmacy Control Panel -->
+                <div class="control-panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-pills"></i> Pharmacy Control Panel</h2>
+                        <div class="panel-badge">PHARMACY</div>
+                    </div>
+                    
+                    <div class="form-grid">
+                        <div class="control-group">
+                            <label class="control-label">
+                                <i class="fas fa-user-md"></i> Pharmacist Name
+                            </label>
+                            <input type="text" class="form-control" id="pharmacy-pharmacist" placeholder="Enter pharmacist name">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">
+                                <i class="fas fa-prescription-bottle"></i> Medication Type
+                            </label>
+                            <div class="select-wrapper">
+                                <select class="form-control" id="pharmacy-medication">
+                                    <option value="PRESCRIPTION">Prescription</option>
+                                    <option value="OTC">Over-the-Counter</option>
+                                    <option value="INJECTION">Injection</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="actions-row">
+                        <button class="btn btn-pharmacy" onclick="pharmacyCallNextPatient()">
+                            <i class="fas fa-user-plus"></i> Call Next Patient
+                        </button>
+                        <button class="btn btn-success" onclick="pharmacyCompleteAndRoute()">
+                            <i class="fas fa-check-circle"></i> Complete & Route
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Active Pharmacy Patients -->
+                <div class="queue-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-user-clock"></i> Active Patients</h3>
+                        <div class="count-badge" id="pharmacy-active-count">0</div>
+                    </div>
+                    
+                    <table class="queue-table">
+                        <thead>
+                            <tr>
+                                <th>Ticket #</th>
+                                <th>Patient</th>
+                                <th>Medication</th>
+                                <th>Pharmacist</th>
+                                <th>Started</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pharmacy-active-tbody">
+                            <!-- Active patients will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pharmacy Waiting Queue -->
+                <div class="queue-section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-clock"></i> Waiting Queue</h3>
+                        <div class="count-badge" id="pharmacy-waiting-count">0</div>
+                    </div>
+                    
+                    <table class="queue-table">
+                        <thead>
+                            <tr>
+                                <th>Ticket #</th>
+                                <th>Patient</th>
+                                <th>Priority</th>
+                                <th>Requested</th>
+                                <th>Wait Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pharmacy-waiting-tbody">
+                            <!-- Waiting patients will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pharmacy Sidebar -->
+            <div class="sidebar">
+                <!-- Pharmacy Statistics -->
+                <div class="stats-card">
+                    <h3><i class="fas fa-chart-bar"></i> Pharmacy Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="pharmacy-dispensed-today">0</div>
+                            <div class="stat-label">Dispensed Today</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="pharmacy-completed">0</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="pharmacy-pending">0</div>
+                            <div class="stat-label">Pending</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="pharmacy-queue-count">0</div>
+                            <div class="stat-label">In Queue</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="routing-panel">
+                    <h3><i class="fas fa-bolt"></i> Quick Actions</h3>
+                    <div class="routing-form">
+                        <button class="btn btn-secondary" onclick="pharmacyViewStock()">
+                            <i class="fas fa-boxes"></i> View Stock
+                        </button>
+                        <button class="btn btn-secondary" onclick="pharmacyViewPrescriptions()">
+                            <i class="fas fa-file-prescription"></i> View Prescriptions
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pharmacy Activity Feed -->
+                <div class="activity-feed">
+                    <h3><i class="fas fa-history"></i> Pharmacy Activity</h3>
+                    <div class="activity-list" id="pharmacy-activity-list">
+                        <!-- Activity items will be added here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        // Complete Hospital Queue Management System
+        class HospitalQueueSystem {
+            constructor() {
+                this.currentStation = null;
+                this.patients = [];
+                this.activityLog = [];
+                this.initialStation = 'TRIAGE'; // Default initial station
+                
+                this.init();
+            }
+
+            init() {
+                this.updateAllClocks();
+                setInterval(() => this.updateAllClocks(), 1000);
+                
+                // Load sample data
+                this.loadSampleData();
+                
+                // Setup event listeners for station selection
+                this.setupStationFilters();
+            }
+
+            updateAllClocks() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], { 
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                const dateString = now.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                // Update all clock displays
+                ['opd', 'lab', 'pharmacy'].forEach(station => {
+                    const timeEl = document.getElementById(`${station}-time`);
+                    const dateEl = document.getElementById(`${station}-date`);
+                    if (timeEl) timeEl.textContent = timeString;
+                    if (dateEl) dateEl.textContent = dateString;
+                });
+                
+                // Also update main system screens if they exist
+                const mainTimeEl = document.getElementById('current-time');
+                const mainDateEl = document.getElementById('current-date');
+                if (mainTimeEl) mainTimeEl.textContent = timeString;
+                if (mainDateEl) mainDateEl.textContent = dateString;
+            }
+
+            loadSampleData() {
+                // Sample patients with different stations
+                this.patients = [
+                    {
+                        id: 1,
+                        ticketNo: 'OPD-20240201-0001',
+                        name: 'John Doe',
+                        age: 35,
+                        gender: 'Male',
+                        phone: '+265 999 123 456',
+                        priority: 3,
+                        complaint: 'Fever and headache',
+                        currentStation: 'TRIAGE',
+                        status: 'WAITING',
+                        registeredAt: new Date(Date.now() - 3600000), // 1 hour ago
+                        history: []
+                    },
+                    {
+                        id: 2,
+                        ticketNo: 'OPD-20240201-0002',
+                        name: 'Jane Smith',
+                        age: 28,
+                        gender: 'Female',
+                        phone: '+265 888 456 789',
+                        priority: 2,
+                        complaint: 'Chest pain',
+                        currentStation: 'CLINIC',
+                        status: 'IN_SERVICE',
+                        registeredAt: new Date(Date.now() - 1800000), // 30 min ago
+                        history: []
+                    }
+                ];
+
+                // Sample activity log
+                this.activityLog = [
+                    {
+                        station: 'OPD',
+                        message: 'Patient John Doe registered',
+                        icon: 'fas fa-user-plus',
+                        timestamp: new Date(Date.now() - 3600000)
+                    },
+                    {
+                        station: 'OPD',
+                        message: 'Patient Jane Smith registered',
+                        icon: 'fas fa-user-plus',
+                        timestamp: new Date(Date.now() - 1800000)
+                    }
+                ];
+
+                // Initialize displays
+                this.refreshOPDDisplay();
+                this.refreshLabDisplay();
+                this.refreshPharmacyDisplay();
+            }
+
+            selectStation(station) {
+                this.currentStation = station;
+                
+                // Hide all system screens and login screen
+                document.getElementById('login-screen').style.display = 'none';
+                document.querySelectorAll('.system-screen').forEach(screen => {
+                    screen.style.display = 'none';
+                });
+                
+                // Show selected station screen
+                let screenId;
+                switch(station) {
+                    case 'OPD':
+                        screenId = 'opd-system';
+                        break;
+                    case 'LAB':
+                        screenId = 'lab-system';
+                        break;
+                    case 'PHARMACY':
+                        screenId = 'pharmacy-system';
+                        break;
+                    default:
+                        screenId = 'opd-system'; // Default to OPD
+                }
+                
+                if (screenId) {
+                    document.getElementById(screenId).style.display = 'block';
+                }
+            }
+
+            goToLogin() {
+                // Hide all system screens
+                document.querySelectorAll('.system-screen').forEach(screen => {
+                    screen.style.display = 'none';
+                });
+                
+                // Show login screen
+                document.getElementById('login-screen').style.display = 'flex';
+                this.currentStation = null;
+            }
+
+            // ============= OPD REGISTRATION FUNCTIONS =============
+            selectInitialStation(station) {
+                this.initialStation = station;
+                
+                // Update UI
+                document.querySelectorAll('.station-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                const selectedOption = document.querySelector(`.station-option[data-station="${station}"]`);
+                if (selectedOption) {
+                    selectedOption.classList.add('selected');
+                }
+            }
+
+            registerPatient() {
+                // Get form values
+                const name = document.getElementById('opd-patient-name').value.trim();
+                const age = parseInt(document.getElementById('opd-patient-age').value);
+                const gender = document.getElementById('opd-patient-gender').value;
+                const phone = document.getElementById('opd-patient-phone').value.trim();
+                const priority = parseInt(document.getElementById('opd-patient-priority').value);
+                const complaint = document.getElementById('opd-patient-complaint').value.trim();
+                
+                // Validation
+                if (!name || !age || !gender) {
+                    this.showToast('Please fill in all required fields', 'error');
+                    return;
+                }
+                
+                if (!this.initialStation) {
+                    this.showToast('Please select a station to route the patient', 'error');
+                    return;
+                }
+                
+                // Generate ticket number
+                const date = new Date();
+                const dateStr = date.toISOString().split('T')[0].replace(/-/g, '');
+                
+                // Determine prefix based on station and priority
+                let prefix = 'OPD';
+                if (priority === 1) prefix = 'EMG';
+                else if (age <= 5) prefix = 'U5';
+                else if (age <= 12) prefix = 'PED';
+                
+                // Count existing tickets for today with same prefix
+                const count = this.patients.filter(p => 
+                    p.ticketNo.startsWith(prefix) && 
+                    p.ticketNo.includes(dateStr)
+                ).length + 1;
+                
+                const ticketNo = `${prefix}-${dateStr}-${String(count).padStart(4, '0')}`;
+                
+                // Create new patient
+                const newPatient = {
+                    id: Date.now(),
+                    ticketNo: ticketNo,
+                    name: name,
+                    age: age,
+                    gender: gender,
+                    phone: phone,
+                    priority: priority,
+                    complaint: complaint,
+                    currentStation: this.initialStation,
+                    status: 'WAITING',
+                    registeredAt: new Date(),
+                    history: []
+                };
+                
+                // Add station-specific data
+                if (this.initialStation === 'LAB') {
+                    newPatient.testType = 'BLOOD_TEST'; // Default test type
+                } else if (this.initialStation === 'PHARMACY') {
+                    newPatient.medicationType = 'PRESCRIPTION'; // Default medication type
+                }
+                
+                this.patients.push(newPatient);
+                
+                // Clear form
+                this.clearRegistrationForm();
+                
+                // Refresh displays
+                this.refreshOPDDisplay();
+                
+                // Log activity
+                this.logActivity(
+                    'OPD',
+                    `Patient ${name} registered with ticket ${ticketNo}`,
+                    'fas fa-user-plus'
+                );
+                
+                this.showToast(`Registered ${name}. Ticket: ${ticketNo}`, 'success');
+            }
+
+            clearRegistrationForm() {
+                document.getElementById('patient-registration-form').reset();
+                document.querySelectorAll('.station-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                this.initialStation = 'TRIAGE'; // Reset to default
+            }
+
+            reassignPatient() {
+                const ticketNo = document.getElementById('reassign-ticket').value.trim();
+                const newStation = document.getElementById('reassign-station').value;
+                
+                if (!ticketNo) {
+                    this.showToast('Please enter a ticket number', 'error');
+                    return;
+                }
+                
+                const patient = this.patients.find(p => p.ticketNo === ticketNo);
+                if (!patient) {
+                    this.showToast('Patient not found', 'error');
+                    return;
+                }
+                
+                const oldStation = patient.currentStation;
+                patient.currentStation = newStation;
+                patient.status = 'WAITING';
+                
+                // Add to history
+                patient.history.push({
+                    timestamp: new Date(),
+                    action: 'Reassigned',
+                    details: `From ${oldStation} to ${newStation}`
+                });
+                
+                // Clear form
+                document.getElementById('reassign-ticket').value = '';
+                
+                // Refresh displays
+                this.refreshOPDDisplay();
+                
+                // Also refresh the station display if it's open
+                if (this.currentStation === newStation || this.currentStation === oldStation) {
+                    this.refreshStationDisplay(newStation);
+                }
+                
+                this.logActivity(
+                    'OPD',
+                    `Patient ${patient.name} reassigned from ${oldStation} to ${newStation}`,
+                    'fas fa-exchange-alt'
+                );
+                
+                this.showToast(`Reassigned ${patient.name} to ${newStation}`, 'success');
+            }
+
+            refreshOPDDisplay() {
+                // Update statistics
+                const total = this.patients.length;
+                const triageCount = this.patients.filter(p => p.currentStation === 'TRIAGE').length;
+                const clinicCount = this.patients.filter(p => p.currentStation === 'CLINIC').length;
+                const labCount = this.patients.filter(p => p.currentStation === 'LAB').length;
+                const pharmacyCount = this.patients.filter(p => p.currentStation === 'PHARMACY').length;
+                
+                document.getElementById('opd-total').textContent = total;
+                document.getElementById('opd-triage').textContent = triageCount;
+                document.getElementById('opd-clinic').textContent = clinicCount;
+                document.getElementById('opd-lab').textContent = labCount;
+                
+                // Update registered patients table
+                const tbody = document.getElementById('registered-tbody');
+                tbody.innerHTML = '';
+                
+                // Get filter
+                const activeFilter = document.querySelector('.filter-btn.active');
+                const filterStation = activeFilter ? activeFilter.dataset.station : 'ALL';
+                
+                // Filter patients
+                let filteredPatients = this.patients;
+                if (filterStation !== 'ALL') {
+                    filteredPatients = this.patients.filter(p => p.currentStation === filterStation);
+                }
+                
+                // Sort by registration time (newest first)
+                filteredPatients.sort((a, b) => new Date(b.registeredAt) - new Date(a.registeredAt));
+                
+                // Display
+                if (filteredPatients.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <i class="fas fa-users"></i>
+                                <h4>No patients registered</h4>
+                                <p>Patients will appear here once registered</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    filteredPatients.forEach(patient => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><span class="ticket-number">${patient.ticketNo}</span></td>
+                            <td>
+                                <div class="patient-info">
+                                    <div class="patient-name">${patient.name}</div>
+                                    <div class="patient-details">${patient.age}y ${patient.gender} • ${patient.phone || 'No phone'}</div>
+                                </div>
+                            </td>
+                            <td><span class="priority-badge priority-${patient.priority}">${patient.priority}</span></td>
+                            <td>${patient.currentStation}</td>
+                            <td><span class="status-badge status-${patient.status.toLowerCase().replace('_', '-')}">${patient.status.replace('_', ' ')}</span></td>
+                            <td>${this.getTimeAgo(patient.registeredAt)}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn" onclick="queueSystem.viewPatientDetails(${patient.id})">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+                
+                // Update counts
+                document.getElementById('registered-count').textContent = filteredPatients.length;
+                
+                // Update activity feed
+                this.updateOPDActivityFeed();
+            }
+
+            setupStationFilters() {
+                const stations = ['ALL', 'TRIAGE', 'CLINIC', 'LAB', 'PHARMACY', 'RADIOLOGY', 'CASHIER'];
+                const container = document.getElementById('opd-filter-buttons');
+                
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                stations.forEach(station => {
+                    const button = document.createElement('button');
+                    button.className = 'filter-btn';
+                    button.dataset.station = station;
+                    button.textContent = station;
+                    button.onclick = () => this.filterOPDByStation(station);
+                    container.appendChild(button);
+                });
+                
+                // Set default active
+                this.filterOPDByStation('ALL');
+            }
+
+            filterOPDByStation(station) {
+                // Update active button
+                document.querySelectorAll('#opd-filter-buttons .filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                const activeBtn = document.querySelector(`#opd-filter-buttons .filter-btn[data-station="${station}"]`);
+                if (activeBtn) activeBtn.classList.add('active');
+                
+                // Refresh display
+                this.refreshOPDDisplay();
+            }
+
+            updateOPDActivityFeed() {
+                const container = document.getElementById('opd-activity-list');
+                if (!container) return;
+                
+                // Filter OPD activities
+                const opdActivities = this.activityLog.filter(a => a.station === 'OPD');
+                
+                // Sort by timestamp (newest first)
+                opdActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                container.innerHTML = '';
+                
+                opdActivities.slice(0, 10).forEach(activity => {
+                    const item = document.createElement('div');
+                    item.className = 'activity-item';
+                    item.innerHTML = `
+                        <div class="activity-icon">
+                            <i class="${activity.icon}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-text">${activity.message}</div>
+                            <div class="activity-time">${this.getTimeAgo(activity.timestamp)}</div>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+
+            // ============= LABORATORY FUNCTIONS =============
+            refreshLabDisplay() {
+                // Get lab patients
+                const labPatients = this.patients.filter(p => p.currentStation === 'LAB');
+                const waitingPatients = labPatients.filter(p => p.status === 'WAITING');
+                const activePatients = labPatients.filter(p => p.status === 'IN_SERVICE');
+                
+                // Update counts
+                document.getElementById('lab-queue-count').textContent = `${waitingPatients.length} Patients`;
+                document.getElementById('lab-waiting-count').textContent = waitingPatients.length;
+                document.getElementById('lab-active-count').textContent = activePatients.length;
+                
+                // Update statistics
+                const testsToday = labPatients.length;
+                const testsCompleted = labPatients.filter(p => p.status === 'COMPLETED').length;
+                const testsPending = waitingPatients.length + activePatients.length;
+                
+                document.getElementById('lab-tests-today').textContent = testsToday;
+                document.getElementById('lab-tests-completed').textContent = testsCompleted;
+                document.getElementById('lab-tests-pending').textContent = testsPending;
+                
+                // Update waiting table
+                const waitingTbody = document.getElementById('lab-waiting-tbody');
+                waitingTbody.innerHTML = '';
+                
+                if (waitingPatients.length === 0) {
+                    waitingTbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-clock"></i>
+                                <h4>No patients waiting</h4>
+                                <p>Waiting patients will appear here</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    waitingPatients.forEach(patient => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><span class="ticket-number">${patient.ticketNo}</span></td>
+                            <td>
+                                <div class="patient-info">
+                                    <div class="patient-name">${patient.name}</div>
+                                    <div class="patient-details">${patient.age}y ${patient.gender}</div>
+                                </div>
+                            </td>
+                            <td><span class="priority-badge priority-${patient.priority}">${patient.priority}</span></td>
+                            <td>${patient.testType || 'Not specified'}</td>
+                            <td>${this.getTimeAgo(patient.registeredAt)}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn" onclick="queueSystem.labStartTest(${patient.id})">
+                                        <i class="fas fa-play"></i> Start
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        waitingTbody.appendChild(row);
+                    });
+                }
+                
+                // Update active table
+                const activeTbody = document.getElementById('lab-active-tbody');
+                activeTbody.innerHTML = '';
+                
+                if (activePatients.length === 0) {
+                    activeTbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-microscope"></i>
+                                <h4>No active tests</h4>
+                                <p>Active tests will appear here</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    activePatients.forEach(patient => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><span class="ticket-number">${patient.ticketNo}</span></td>
+                            <td>
+                                <div class="patient-info">
+                                    <div class="patient-name">${patient.name}</div>
+                                    <div class="patient-details">${patient.age}y ${patient.gender}</div>
+                                </div>
+                            </td>
+                            <td>${patient.testType || 'Not specified'}</td>
+                            <td>${patient.technician || 'Not assigned'}</td>
+                            <td>${patient.testStartedAt ? this.getTimeAgo(patient.testStartedAt) : 'Just started'}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn" onclick="queueSystem.labCompleteTest(${patient.id})">
+                                        <i class="fas fa-check"></i> Complete
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        activeTbody.appendChild(row);
+                    });
+                }
+                
+                // Update test types breakdown
+                this.updateLabTestTypes();
+                
+                // Update activity feed
+                this.updateLabActivityFeed();
+            }
+
+            labCallNextPatient() {
+                const technician = document.getElementById('lab-technician').value.trim();
+                if (!technician) {
+                    this.showToast('Please enter technician name', 'error');
+                    return;
+                }
+                
+                const waitingPatients = this.patients.filter(p => 
+                    p.currentStation === 'LAB' && 
+                    p.status === 'WAITING'
+                );
+                
+                if (waitingPatients.length === 0) {
+                    this.showToast('No patients waiting in lab queue', 'warning');
+                    return;
+                }
+                
+                // Sort by priority then wait time
+                waitingPatients.sort((a, b) => {
+                    if (a.priority !== b.priority) return a.priority - b.priority;
+                    return new Date(a.registeredAt) - new Date(b.registeredAt);
+                });
+                
+                const nextPatient = waitingPatients[0];
+                this.labStartTest(nextPatient.id);
+            }
+
+            labStartTest(patientId) {
+                const patient = this.patients.find(p => p.id === patientId);
+                if (!patient) return;
+                
+                const technician = document.getElementById('lab-technician').value.trim();
+                const testType = document.getElementById('lab-test-type').value;
+                
+                patient.status = 'IN_SERVICE';
+                patient.technician = technician;
+                patient.testType = testType;
+                patient.testStartedAt = new Date();
+                
+                // Add to history
+                patient.history.push({
+                    timestamp: new Date(),
+                    action: 'Test Started',
+                    details: `${testType} by ${technician}`
+                });
+                
+                // Refresh displays
+                this.refreshLabDisplay();
+                
+                this.logActivity(
+                    'LAB',
+                    `Test started for ${patient.name} (${testType})`,
+                    'fas fa-play'
+                );
+                
+                this.showToast(`Started ${testType} for ${patient.name}`, 'success');
+            }
+
+            labCompleteTest(patientId) {
+                const patient = this.patients.find(p => p.id === patientId);
+                if (!patient) return;
+                
+                patient.status = 'COMPLETED';
+                patient.testCompletedAt = new Date();
+                
+                // Add to history
+                patient.history.push({
+                    timestamp: new Date(),
+                    action: 'Test Completed',
+                    details: `${patient.testType} completed`
+                });
+                
+                // Refresh displays
+                this.refreshLabDisplay();
+                
+                this.logActivity(
+                    'LAB',
+                    `Test completed for ${patient.name}`,
+                    'fas fa-check'
+                );
+                
+                this.showToast(`Completed test for ${patient.name}`, 'success');
+            }
+
+            labCompleteAndRoute() {
+                const activePatients = this.patients.filter(p => 
+                    p.currentStation === 'LAB' && 
+                    p.status === 'IN_SERVICE'
+                );
+                
+                if (activePatients.length === 0) {
+                    this.showToast('No active tests to complete', 'warning');
+                    return;
+                }
+                
+                // Complete all active tests and route to pharmacy
+                activePatients.forEach(patient => {
+                    patient.status = 'COMPLETED';
+                    patient.testCompletedAt = new Date();
+                    patient.currentStation = 'PHARMACY';
+                    patient.status = 'WAITING';
+                    
+                    patient.history.push({
+                        timestamp: new Date(),
+                        action: 'Routed to Pharmacy',
+                        details: 'Lab test completed, routed to pharmacy'
+                    });
+                });
+                
+                // Refresh displays
+                this.refreshLabDisplay();
+                this.refreshPharmacyDisplay();
+                
+                this.logActivity(
+                    'LAB',
+                    `Completed and routed ${activePatients.length} patient(s) to pharmacy`,
+                    'fas fa-route'
+                );
+                
+                this.showToast(`Completed and routed ${activePatients.length} patient(s) to pharmacy`, 'success');
+            }
+
+            updateLabTestTypes() {
+                const labPatients = this.patients.filter(p => p.currentStation === 'LAB');
+                const testTypes = {};
+                
+                labPatients.forEach(patient => {
+                    const type = patient.testType || 'Unknown';
+                    testTypes[type] = (testTypes[type] || 0) + 1;
+                });
+                
+                const container = document.getElementById('lab-test-types');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                Object.entries(testTypes).forEach(([type, count]) => {
+                    const item = document.createElement('div');
+                    item.className = 'stat-item';
+                    item.innerHTML = `
+                        <div class="stat-value">${count}</div>
+                        <div class="stat-label">${type.replace('_', ' ')}</div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+
+            updateLabActivityFeed() {
+                const container = document.getElementById('lab-activity-list');
+                if (!container) return;
+                
+                // Filter lab activities
+                const labActivities = this.activityLog.filter(a => a.station === 'LAB');
+                
+                // Sort by timestamp (newest first)
+                labActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                container.innerHTML = '';
+                
+                labActivities.slice(0, 10).forEach(activity => {
+                    const item = document.createElement('div');
+                    item.className = 'activity-item';
+                    item.innerHTML = `
+                        <div class="activity-icon">
+                            <i class="${activity.icon}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-text">${activity.message}</div>
+                            <div class="activity-time">${this.getTimeAgo(activity.timestamp)}</div>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+
+            // ============= PHARMACY FUNCTIONS =============
+            refreshPharmacyDisplay() {
+                // Get pharmacy patients
+                const pharmacyPatients = this.patients.filter(p => p.currentStation === 'PHARMACY');
+                const waitingPatients = pharmacyPatients.filter(p => p.status === 'WAITING');
+                const activePatients = pharmacyPatients.filter(p => p.status === 'IN_SERVICE');
+                
+                // Update counts
+                document.getElementById('pharmacy-queue-count').textContent = `${waitingPatients.length} Patients`;
+                document.getElementById('pharmacy-waiting-count').textContent = waitingPatients.length;
+                document.getElementById('pharmacy-active-count').textContent = activePatients.length;
+                
+                // Update statistics
+                const dispensedToday = pharmacyPatients.length;
+                const completed = pharmacyPatients.filter(p => p.status === 'COMPLETED').length;
+                const pending = waitingPatients.length + activePatients.length;
+                
+                document.getElementById('pharmacy-dispensed-today').textContent = dispensedToday;
+                document.getElementById('pharmacy-completed').textContent = completed;
+                document.getElementById('pharmacy-pending').textContent = pending;
+                
+                // Update waiting table
+                const waitingTbody = document.getElementById('pharmacy-waiting-tbody');
+                waitingTbody.innerHTML = '';
+                
+                if (waitingPatients.length === 0) {
+                    waitingTbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-clock"></i>
+                                <h4>No patients waiting</h4>
+                                <p>Waiting patients will appear here</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    waitingPatients.forEach(patient => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><span class="ticket-number">${patient.ticketNo}</span></td>
+                            <td>
+                                <div class="patient-info">
+                                    <div class="patient-name">${patient.name}</div>
+                                    <div class="patient-details">${patient.age}y ${patient.gender}</div>
+                                </div>
+                            </td>
+                            <td><span class="priority-badge priority-${patient.priority}">${patient.priority}</span></td>
+                            <td>${patient.medicationType || 'Not specified'}</td>
+                            <td>${this.getTimeAgo(patient.registeredAt)}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn" onclick="queueSystem.pharmacyStartDispensing(${patient.id})">
+                                        <i class="fas fa-play"></i> Start
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        waitingTbody.appendChild(row);
+                    });
+                }
+                
+                // Update active table
+                const activeTbody = document.getElementById('pharmacy-active-tbody');
+                activeTbody.innerHTML = '';
+                
+                if (activePatients.length === 0) {
+                    activeTbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <i class="fas fa-pills"></i>
+                                <h4>No active dispensing</h4>
+                                <p>Active dispensing will appear here</p>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    activePatients.forEach(patient => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td><span class="ticket-number">${patient.ticketNo}</span></td>
+                            <td>
+                                <div class="patient-info">
+                                    <div class="patient-name">${patient.name}</div>
+                                    <div class="patient-details">${patient.age}y ${patient.gender}</div>
+                                </div>
+                            </td>
+                            <td>${patient.medicationType || 'Not specified'}</td>
+                            <td>${patient.pharmacist || 'Not assigned'}</td>
+                            <td>${patient.dispensingStartedAt ? this.getTimeAgo(patient.dispensingStartedAt) : 'Just started'}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn" onclick="queueSystem.pharmacyCompleteDispensing(${patient.id})">
+                                        <i class="fas fa-check"></i> Complete
+                                    </button>
+                                </div>
+                            </td>
+                        `;
+                        activeTbody.appendChild(row);
+                    });
+                }
+                
+                // Update activity feed
+                this.updatePharmacyActivityFeed();
+            }
+
+            pharmacyCallNextPatient() {
+                const pharmacist = document.getElementById('pharmacy-pharmacist').value.trim();
+                if (!pharmacist) {
+                    this.showToast('Please enter pharmacist name', 'error');
+                    return;
+                }
+                
+                const waitingPatients = this.patients.filter(p => 
+                    p.currentStation === 'PHARMACY' && 
+                    p.status === 'WAITING'
+                );
+                
+                if (waitingPatients.length === 0) {
+                    this.showToast('No patients waiting in pharmacy queue', 'warning');
+                    return;
+                }
+                
+                // Sort by priority then wait time
+                waitingPatients.sort((a, b) => {
+                    if (a.priority !== b.priority) return a.priority - b.priority;
+                    return new Date(a.registeredAt) - new Date(b.registeredAt);
+                });
+                
+                const nextPatient = waitingPatients[0];
+                this.pharmacyStartDispensing(nextPatient.id);
+            }
+
+            pharmacyStartDispensing(patientId) {
+                const patient = this.patients.find(p => p.id === patientId);
+                if (!patient) return;
+                
+                const pharmacist = document.getElementById('pharmacy-pharmacist').value.trim();
+                const medicationType = document.getElementById('pharmacy-medication').value;
+                
+                patient.status = 'IN_SERVICE';
+                patient.pharmacist = pharmacist;
+                patient.medicationType = medicationType;
+                patient.dispensingStartedAt = new Date();
+                
+                // Add to history
+                patient.history.push({
+                    timestamp: new Date(),
+                    action: 'Dispensing Started',
+                    details: `${medicationType} by ${pharmacist}`
+                });
+                
+                // Refresh displays
+                this.refreshPharmacyDisplay();
+                
+                this.logActivity(
+                    'PHARMACY',
+                    `Dispensing started for ${patient.name} (${medicationType})`,
+                    'fas fa-play'
+                );
+                
+                this.showToast(`Started dispensing for ${patient.name}`, 'success');
+            }
+
+            pharmacyCompleteDispensing(patientId) {
+                const patient = this.patients.find(p => p.id === patientId);
+                if (!patient) return;
+                
+                patient.status = 'COMPLETED';
+                patient.dispensingCompletedAt = new Date();
+                
+                // Add to history
+                patient.history.push({
+                    timestamp: new Date(),
+                    action: 'Dispensing Completed',
+                    details: `${patient.medicationType} completed`
+                });
+                
+                // Refresh displays
+                this.refreshPharmacyDisplay();
+                
+                this.logActivity(
+                    'PHARMACY',
+                    `Dispensing completed for ${patient.name}`,
+                    'fas fa-check'
+                );
+                
+                this.showToast(`Completed dispensing for ${patient.name}`, 'success');
+            }
+
+            pharmacyCompleteAndRoute() {
+                const activePatients = this.patients.filter(p => 
+                    p.currentStation === 'PHARMACY' && 
+                    p.status === 'IN_SERVICE'
+                );
+                
+                if (activePatients.length === 0) {
+                    this.showToast('No active dispensing to complete', 'warning');
+                    return;
+                }
+                
+                // Complete all active dispensing and route to cashier
+                activePatients.forEach(patient => {
+                    patient.status = 'COMPLETED';
+                    patient.dispensingCompletedAt = new Date();
+                    patient.currentStation = 'CASHIER';
+                    patient.status = 'WAITING';
+                    
+                    patient.history.push({
+                        timestamp: new Date(),
+                        action: 'Routed to Cashier',
+                        details: 'Dispensing completed, routed to cashier'
+                    });
+                });
+                
+                // Refresh displays
+                this.refreshPharmacyDisplay();
+                
+                this.logActivity(
+                    'PHARMACY',
+                    `Completed and routed ${activePatients.length} patient(s) to cashier`,
+                    'fas fa-route'
+                );
+                
+                this.showToast(`Completed and routed ${activePatients.length} patient(s) to cashier`, 'success');
+            }
+
+            updatePharmacyActivityFeed() {
+                const container = document.getElementById('pharmacy-activity-list');
+                if (!container) return;
+                
+                // Filter pharmacy activities
+                const pharmacyActivities = this.activityLog.filter(a => a.station === 'PHARMACY');
+                
+                // Sort by timestamp (newest first)
+                pharmacyActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                container.innerHTML = '';
+                
+                pharmacyActivities.slice(0, 10).forEach(activity => {
+                    const item = document.createElement('div');
+                    item.className = 'activity-item';
+                    item.innerHTML = `
+                        <div class="activity-icon">
+                            <i class="${activity.icon}"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-text">${activity.message}</div>
+                            <div class="activity-time">${this.getTimeAgo(activity.timestamp)}</div>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+
+            // ============= UTILITY FUNCTIONS =============
+            logActivity(station, message, icon) {
+                this.activityLog.push({
+                    station: station,
+                    message: message,
+                    icon: icon,
+                    timestamp: new Date()
+                });
+            }
+
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                
+                const icon = type === 'success' ? 'fas fa-check-circle' : 
+                           type === 'error' ? 'fas fa-exclamation-circle' : 
+                           type === 'warning' ? 'fas fa-exclamation-triangle' : 'fas fa-info-circle';
+                
+                toast.innerHTML = `
+                    <div class="toast-content">
+                        <div class="toast-title">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+                `;
+                
+                container.appendChild(toast);
+                
+                // Auto remove after 5 seconds
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.style.animation = 'slideOut 0.3s ease forwards';
+                        setTimeout(() => toast.remove(), 300);
+                    }
+                }, 5000);
+            }
+
+            getTimeAgo(timestamp) {
+                const now = new Date();
+                const diff = now - new Date(timestamp);
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+                
+                if (days > 0) return `${days}d ago`;
+                if (hours > 0) return `${hours}h ago`;
+                if (minutes > 0) return `${minutes}m ago`;
+                return 'Just now';
+            }
+
+            viewPatientDetails(patientId) {
+                const patient = this.patients.find(p => p.id === patientId);
+                if (!patient) return;
+                
+                let details = `Name: ${patient.name}\n`;
+                details += `Age: ${patient.age}\n`;
+                details += `Gender: ${patient.gender}\n`;
+                details += `Phone: ${patient.phone || 'Not provided'}\n`;
+                details += `Priority: ${patient.priority}\n`;
+                details += `Complaint: ${patient.complaint}\n`;
+                details += `Current Station: ${patient.currentStation}\n`;
+                details += `Status: ${patient.status}\n`;
+                details += `Registered: ${patient.registeredAt}\n\n`;
+                
+                if (patient.history && patient.history.length > 0) {
+                    details += 'History:\n';
+                    patient.history.forEach(h => {
+                        details += `- ${h.timestamp}: ${h.action} - ${h.details}\n`;
+                    });
+                }
+                
+                alert(details);
+            }
+
+            exportRegistrations() {
+                const csv = this.generateCSV();
+                this.downloadCSV(csv, 'patient-registrations.csv');
+            }
+
+            generateCSV() {
+                let csv = 'Ticket Number,Name,Age,Gender,Phone,Priority,Complaint,Station,Status,Registered At\n';
+                
+                this.patients.forEach(patient => {
+                    csv += `"${patient.ticketNo}","${patient.name}",${patient.age},"${patient.gender}","${patient.phone || ''}",${patient.priority},"${patient.complaint}","${patient.currentStation}","${patient.status}","${patient.registeredAt}"\n`;
+                });
+                
+                return csv;
+            }
+
+            downloadCSV(csv, filename) {
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            }
+
+            // Station-specific refresh methods
+            labRefreshQueue() {
+                this.refreshLabDisplay();
+            }
+
+            labToggleSort() {
+                // Toggle sorting logic if needed
+                this.refreshLabDisplay();
+            }
+
+            labExportActive() {
+                const activePatients = this.patients.filter(p => p.currentStation === 'LAB' && p.status === 'IN_SERVICE');
+                if (activePatients.length === 0) {
+                    this.showToast('No active tests to export', 'warning');
+                    return;
+                }
+                
+                let csv = 'Ticket Number,Name,Test Type,Technician,Started At\n';
+                activePatients.forEach(patient => {
+                    csv += `"${patient.ticketNo}","${patient.name}","${patient.testType}","${patient.technician}","${patient.testStartedAt}"\n`;
+                });
+                
+                this.downloadCSV(csv, 'active-lab-tests.csv');
+            }
+
+            pharmacyRefreshQueue() {
+                this.refreshPharmacyDisplay();
+            }
+
+            pharmacyViewStock() {
+                this.showToast('Stock management feature coming soon', 'info');
+            }
+
+            pharmacyViewPrescriptions() {
+                this.showToast('Prescription management feature coming soon', 'info');
+            }
+
+            // Simulate real-time updates
+            simulateUpdates() {
+                // Randomly update some patient statuses for demo
+                const activePatients = this.patients.filter(p => p.status === 'IN_SERVICE');
+                if (activePatients.length > 0 && Math.random() < 0.3) { // 30% chance
+                    const randomPatient = activePatients[Math.floor(Math.random() * activePatients.length)];
+                    
+                    if (randomPatient.currentStation === 'LAB') {
+                        this.labCompleteTest(randomPatient.id);
+                    } else if (randomPatient.currentStation === 'PHARMACY') {
+                        this.pharmacyCompleteDispensing(randomPatient.id);
+                    }
+                }
+            }
+        }
+
+        // Initialize the system
+        const queueSystem = new HospitalQueueSystem();
+
+        // Global functions for onclick handlers
+        window.selectStation = (station) => queueSystem.selectStation(station);
+        window.goToLogin = () => queueSystem.goToLogin();
+        window.selectInitialStation = (station) => queueSystem.selectInitialStation(station);
+        window.registerPatient = () => queueSystem.registerPatient();
+        window.clearRegistrationForm = () => queueSystem.clearRegistrationForm();
+        window.reassignPatient = () => queueSystem.reassignPatient();
+        window.exportRegistrations = () => queueSystem.exportRegistrations();
+        
+        // Lab functions
+        window.labCallNextPatient = () => queueSystem.labCallNextPatient();
+        window.labStartTest = (id) => queueSystem.labStartTest(id);
+        window.labCompleteTest = (id) => queueSystem.labCompleteTest(id);
+        window.labCompleteAndRoute = () => queueSystem.labCompleteAndRoute();
+        window.labRefreshQueue = () => queueSystem.labRefreshQueue();
+        window.labToggleSort = () => queueSystem.labToggleSort();
+        window.labExportActive = () => queueSystem.labExportActive();
+        
+        // Pharmacy functions
+        window.pharmacyCallNextPatient = () => queueSystem.pharmacyCallNextPatient();
+        window.pharmacyStartDispensing = (id) => queueSystem.pharmacyStartDispensing(id);
+        window.pharmacyCompleteDispensing = (id) => queueSystem.pharmacyCompleteDispensing(id);
+        window.pharmacyCompleteAndRoute = () => queueSystem.pharmacyCompleteAndRoute();
+        window.pharmacyRefreshQueue = () => queueSystem.pharmacyRefreshQueue();
+        window.pharmacyViewStock = () => queueSystem.pharmacyViewStock();
+        window.pharmacyViewPrescriptions = () => queueSystem.pharmacyViewPrescriptions();
+
+        // Start simulation updates
+        setInterval(() => queueSystem.simulateUpdates(), 30000); // Every 30 seconds
+    </script>
+</body>
+</html>
