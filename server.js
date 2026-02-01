@@ -56,6 +56,15 @@ app.get('/api/queue', async (req, res) => {
   }
 });
 
+app.get('/api/test', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT COUNT(*) FROM patients');
+    res.json({ message: 'DB connected', count: result.rows[0].count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/queue', async (req, res) => {
   const { name, condition, station, phone } = req.body;
   try {
