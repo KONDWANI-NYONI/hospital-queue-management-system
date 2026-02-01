@@ -1661,6 +1661,15 @@
                 this.setupStationFilters();
             }
 
+            speak(text) {
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    window.speechSynthesis.speak(utterance);
+                } else {
+                    alert(text);
+                }
+            }
+
             updateAllClocks() {
                 const now = new Date();
                 const timeString = now.toLocaleTimeString([], { 
@@ -2205,6 +2214,7 @@
                 });
                 
                 const nextPatient = waitingPatients[0];
+                this.speak(`Patient ${nextPatient.name}, ticket number ${nextPatient.id}, please proceed to Laboratory`);
                 this.labStartTest(nextPatient.id);
             }
 
@@ -2485,6 +2495,7 @@
                 });
                 
                 const nextPatient = waitingPatients[0];
+                this.speak(`Patient ${nextPatient.name}, ticket number ${nextPatient.id}, please proceed to Pharmacy`);
                 this.pharmacyStartDispensing(nextPatient.id);
             }
 
