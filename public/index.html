@@ -1646,6 +1646,7 @@
                 this.patients = [];
                 this.activityLog = [];
                 this.initialStation = 'TRIAGE'; // Default initial station
+                this.API_BASE = '/api';
                 
                 this.init();
             }
@@ -1655,7 +1656,7 @@
                 setInterval(() => this.updateAllClocks(), 1000);
                 
                 // Load sample data
-                this.loadSampleData();
+                this.loadPatients();
                 
                 // Setup event listeners for station selection
                 this.setupStationFilters();
@@ -1667,6 +1668,55 @@
                     window.speechSynthesis.speak(utterance);
                 } else {
                     alert(text);
+                }
+            }
+
+            async loadPatients() {
+                try {
+                    const response = await fetch(`${this.API_BASE}/queue`);
+                    this.patients = await response.json();
+                    this.refreshAllDisplays();
+                } catch (error) {
+                    console.error('Error loading patients:', error);
+                }
+            }
+
+            async registerPatientAPI(data) {
+                try {
+                    const response = await fetch(`${this.API_BASE}/queue`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    if (response.ok) {
+                        await this.loadPatients();
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error registering patient:', error);
+                }
+                return false;
+            }
+
+            async updatePatientStatus(id, status) {
+                try {
+                    await fetch(`${this.API_BASE}/queue/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status })
+                    });
+                    await this.loadPatients();
+                } catch (error) {
+                    console.error('Error updating patient:', error);
+                }
+            }
+
+            async deletePatient(id) {
+                try {
+                    await fetch(`${this.API_BASE}/queue/${id}`, { method: 'DELETE' });
+                    await this.loadPatients();
+                } catch (error) {
+                    console.error('Error deleting patient:', error);
                 }
             }
 
@@ -1832,63 +1882,33 @@
                     return;
                 }
                 
-                // Generate ticket number
-                const date = new Date();
-                const dateStr = date.toISOString().split('T')[0].replace(/-/g, '');
-                
-                // Determine prefix based on station and priority
-                let prefix = 'OPD';
-                if (priority === 1) prefix = 'EMG';
-                else if (age <= 5) prefix = 'U5';
-                else if (age <= 12) prefix = 'PED';
-                
-                // Count existing tickets for today with same prefix
-                const count = this.patients.filter(p => 
-                    p.ticketNo.startsWith(prefix) && 
-                    p.ticketNo.includes(dateStr)
-                ).length + 1;
-                
-                const ticketNo = `${prefix}-${dateStr}-${String(count).padStart(4, '0')}`;
-                
-                // Create new patient
-                const newPatient = {
-                    id: Date.now(),
-                    ticketNo: ticketNo,
+                // Create new patient data for API
+                const patientData = {
                     name: name,
-                    age: age,
-                    gender: gender,
-                    phone: phone,
-                    priority: priority,
-                    complaint: complaint,
-                    currentStation: this.initialStation,
-                    status: 'WAITING',
-                    registeredAt: new Date(),
-                    history: []
+                    condition: complaint,
+                    station: this.initialStation,
+                    phone: phone
                 };
                 
-                // Add station-specific data
-                if (this.initialStation === 'LAB') {
-                    newPatient.testType = 'BLOOD_TEST'; // Default test type
-                } else if (this.initialStation === 'PHARMACY') {
-                    newPatient.medicationType = 'PRESCRIPTION'; // Default medication type
+                const success = await this.registerPatientAPI(patientData);
+                if (success) {
+                    // Clear form
+                    this.clearRegistrationForm();
+                    
+                    // Refresh displays
+                    this.refreshOPDDisplay();
+                    
+                    // Log activity
+                    this.logActivity(
+                        'OPD',
+                        `Patient ${name} registered`,
+                        'fas fa-user-plus'
+                    );
+                    
+                    this.showToast(`Registered ${name}`, 'success');
+                } else {
+                    this.showToast('Failed to register patient', 'error');
                 }
-                
-                this.patients.push(newPatient);
-                
-                // Clear form
-                this.clearRegistrationForm();
-                
-                // Refresh displays
-                this.refreshOPDDisplay();
-                
-                // Log activity
-                this.logActivity(
-                    'OPD',
-                    `Patient ${name} registered with ticket ${ticketNo}`,
-                    'fas fa-user-plus'
-                );
-                
-                this.showToast(`Registered ${name}. Ticket: ${ticketNo}`, 'success');
             }
 
             clearRegistrationForm() {
@@ -2215,7 +2235,7 @@
                 
                 const nextPatient = waitingPatients[0];
                 this.speak(`Patient ${nextPatient.name}, ticket number ${nextPatient.id}, please proceed to Laboratory`);
-                this.labStartTest(nextPatient.id);
+                await this.updatePatientStatus(nextPatient.id, 'called');
             }
 
             labStartTest(patientId) {
@@ -2250,29 +2270,7 @@
             }
 
             labCompleteTest(patientId) {
-                const patient = this.patients.find(p => p.id === patientId);
-                if (!patient) return;
-                
-                patient.status = 'COMPLETED';
-                patient.testCompletedAt = new Date();
-                
-                // Add to history
-                patient.history.push({
-                    timestamp: new Date(),
-                    action: 'Test Completed',
-                    details: `${patient.testType} completed`
-                });
-                
-                // Refresh displays
-                this.refreshLabDisplay();
-                
-                this.logActivity(
-                    'LAB',
-                    `Test completed for ${patient.name}`,
-                    'fas fa-check'
-                );
-                
-                this.showToast(`Completed test for ${patient.name}`, 'success');
+                await this.updatePatientStatus(patientId, 'completed');
             }
 
             labCompleteAndRoute() {
@@ -2496,7 +2494,7 @@
                 
                 const nextPatient = waitingPatients[0];
                 this.speak(`Patient ${nextPatient.name}, ticket number ${nextPatient.id}, please proceed to Pharmacy`);
-                this.pharmacyStartDispensing(nextPatient.id);
+                await this.updatePatientStatus(nextPatient.id, 'called');
             }
 
             pharmacyStartDispensing(patientId) {
@@ -2531,29 +2529,7 @@
             }
 
             pharmacyCompleteDispensing(patientId) {
-                const patient = this.patients.find(p => p.id === patientId);
-                if (!patient) return;
-                
-                patient.status = 'COMPLETED';
-                patient.dispensingCompletedAt = new Date();
-                
-                // Add to history
-                patient.history.push({
-                    timestamp: new Date(),
-                    action: 'Dispensing Completed',
-                    details: `${patient.medicationType} completed`
-                });
-                
-                // Refresh displays
-                this.refreshPharmacyDisplay();
-                
-                this.logActivity(
-                    'PHARMACY',
-                    `Dispensing completed for ${patient.name}`,
-                    'fas fa-check'
-                );
-                
-                this.showToast(`Completed dispensing for ${patient.name}`, 'success');
+                await this.updatePatientStatus(patientId, 'completed');
             }
 
             pharmacyCompleteAndRoute() {
