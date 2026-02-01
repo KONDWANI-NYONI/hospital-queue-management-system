@@ -44,7 +44,36 @@ async function register() {
 async function showQueue() {
   document.getElementById('auth').style.display = 'none';
   document.getElementById('queue').style.display = 'block';
+  loadCountryCodes();
+  loadStations();
   loadQueue();
+}
+
+async function loadCountryCodes() {
+  const response = await fetch(`${API_BASE}/country-codes`);
+  const codes = await response.json();
+  const select = document.getElementById('country-code');
+  codes.forEach(code => {
+    const option = document.createElement('option');
+    option.value = code.code;
+    option.textContent = `${code.code} (${code.country})`;
+    select.appendChild(option);
+  });
+}
+
+async function loadStations() {
+  const response = await fetch(`${API_BASE}/stations`);
+  const stations = await response.json();
+  const container = document.getElementById('stations');
+  container.innerHTML = '';
+  stations.forEach(station => {
+    const btn = document.createElement('button');
+    btn.className = 'station-btn';
+    btn.dataset.station = station;
+    btn.textContent = station;
+    if (station === currentStation) btn.classList.add('active');
+    container.appendChild(btn);
+  });
 }
 
 async function loadQueue() {
@@ -98,7 +127,22 @@ async function callPatient(id) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: 'called' })
   });
+  const response = await fetch(`${API_BASE}/queue`);
+  const patients = await response.json();
+  const patient = patients.find(p => p.id === id);
+  if (patient) {
+    speak(`Patient ${patient.name}, ticket number ${patient.id}, please proceed to ${patient.station}`);
+  }
   loadQueue();
+}
+
+function speak(text) {
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+  } else {
+    alert(text);
+  }
 }
 
 async function completePatient(id) {
@@ -113,4 +157,15 @@ async function completePatient(id) {
 async function removePatient(id) {
   await fetch(`${API_BASE}/queue/${id}`, { method: 'DELETE' });
   loadQueue();
+}
+
+async function exportToExcel() {
+  const response = await fetch(`${API_BASE}/export`);
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'patients.xlsx';
+  a.click();
+  window.URL.revokeObjectURL(url);
 }

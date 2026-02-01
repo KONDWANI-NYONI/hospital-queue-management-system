@@ -1144,7 +1144,12 @@
                                 <label class="control-label">
                                     <i class="fas fa-phone"></i> Phone Number
                                 </label>
-                                <input type="tel" class="form-control" id="opd-patient-phone">
+                                <div style="display: flex;">
+                                    <select class="form-control" id="country-code" style="width: 30%; margin-right: 10px;">
+                                        <option value="">Code</option>
+                                    </select>
+                                    <input type="tel" class="form-control" id="opd-patient-phone" style="width: 70%;">
+                                </div>
                             </div>
                             
                             <div class="control-group">
@@ -1199,6 +1204,9 @@
                             </button>
                             <button type="button" class="btn btn-secondary" onclick="clearRegistrationForm()">
                                 <i class="fas fa-eraser"></i> Clear Form
+                            </button>
+                            <button type="button" class="btn btn-info" onclick="exportToExcel()">
+                                <i class="fas fa-download"></i> Export to Excel
                             </button>
                         </div>
                     </form>
@@ -2787,6 +2795,62 @@
 
         // Start simulation updates
         setInterval(() => queueSystem.simulateUpdates(), 30000); // Every 30 seconds
+
+        // API integration
+        const API_BASE = '/api';
+
+        async function loadCountryCodes() {
+            const response = await fetch(`${API_BASE}/country-codes`);
+            const codes = await response.json();
+            const select = document.getElementById('country-code');
+            codes.forEach(code => {
+                const option = document.createElement('option');
+                option.value = code.code;
+                option.textContent = `${code.code} (${code.country})`;
+                select.appendChild(option);
+            });
+        }
+
+        async function registerPatientAPI() {
+            const name = document.getElementById('opd-patient-name').value;
+            const age = document.getElementById('opd-patient-age').value;
+            const phoneCode = document.getElementById('country-code').value;
+            const phone = document.getElementById('opd-patient-phone').value;
+            const fullPhone = phoneCode + phone;
+            const condition = 'General'; // Default
+            const station = 'OPD'; // For now
+            const response = await fetch(`${API_BASE}/queue`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, condition, station, phone: fullPhone })
+            });
+            if (response.ok) {
+                alert('Patient registered');
+                // Clear form
+                document.getElementById('opd-patient-name').value = '';
+                document.getElementById('opd-patient-age').value = '';
+                document.getElementById('opd-patient-phone').value = '';
+            } else {
+                alert('Error registering patient');
+            }
+        }
+
+        async function exportToExcel() {
+            const response = await fetch(`${API_BASE}/export`);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'patients.xlsx';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Override the existing registerPatient to use API
+        window.registerPatient = registerPatientAPI;
+
+        // Load country codes on page load
+        document.addEventListener('DOMContentLoaded', loadCountryCodes);
     </script>
 </body>
 </html>
