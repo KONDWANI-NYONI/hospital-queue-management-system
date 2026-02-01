@@ -66,9 +66,9 @@ app.get('/api/test', async (req, res) => {
 });
 
 app.post('/api/queue', async (req, res) => {
-  const { name, condition, station, phone } = req.body;
+  const { name, age, gender, condition, station, phone } = req.body;
   try {
-    const result = await pool.query('INSERT INTO patients (name, condition, station, phone) VALUES ($1, $2, $3, $4) RETURNING *', [name, condition, station, phone]);
+    const result = await pool.query('INSERT INTO patients (name, age, gender, condition, station, phone) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *', [name, age, gender, condition, station, phone]);
     res.status(201).json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });

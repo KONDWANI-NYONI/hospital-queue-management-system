@@ -10,6 +10,8 @@ CREATE TABLE users (
 CREATE TABLE patients (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
+  age INTEGER,
+  gender VARCHAR(10),
   condition TEXT,
   station VARCHAR(50) NOT NULL,
   phone VARCHAR(20),

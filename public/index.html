@@ -1712,11 +1712,15 @@
             }
 
             async deletePatient(id) {
-                try {
-                    await fetch(`${this.API_BASE}/queue/${id}`, { method: 'DELETE' });
-                    await this.loadPatients();
-                } catch (error) {
-                    console.error('Error deleting patient:', error);
+                if (confirm('Are you sure you want to delete this patient? This action cannot be undone.')) {
+                    try {
+                        await fetch(`${this.API_BASE}/queue/${id}`, { method: 'DELETE' });
+                        await this.loadPatients();
+                        this.showToast('Patient deleted successfully', 'success');
+                    } catch (error) {
+                        console.error('Error deleting patient:', error);
+                        this.showToast('Error deleting patient', 'error');
+                    }
                 }
             }
 
@@ -1885,6 +1889,8 @@
                 // Create new patient data for API
                 const patientData = {
                     name: name,
+                    age: age,
+                    gender: gender,
                     condition: complaint,
                     station: this.initialStation,
                     phone: phone
@@ -2014,7 +2020,7 @@
                             <td>
                                 <div class="patient-info">
                                     <div class="patient-name">${patient.name}</div>
-                                    <div class="patient-details">N/A • N/A • ${patient.phone || 'No phone'}</div>
+                                    <div class="patient-details">${patient.age || 'N/A'}y ${patient.gender || 'N/A'} • ${patient.phone || 'No phone'}</div>
                                 </div>
                             </td>
                             <td><span class="priority-badge priority-normal">${patient.condition}</span></td>
