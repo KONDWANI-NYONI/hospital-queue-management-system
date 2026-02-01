@@ -1862,7 +1862,7 @@
                 }
             }
 
-            registerPatient() {
+            async registerPatient() {
                 // Get form values
                 const name = document.getElementById('opd-patient-name').value.trim();
                 const age = parseInt(document.getElementById('opd-patient-age').value);
@@ -2210,7 +2210,7 @@
                 this.updateLabActivityFeed();
             }
 
-            labCallNextPatient() {
+            async labCallNextPatient() {
                 const technician = document.getElementById('lab-technician').value.trim();
                 if (!technician) {
                     this.showToast('Please enter technician name', 'error');
@@ -2269,7 +2269,7 @@
                 this.showToast(`Started ${testType} for ${patient.name}`, 'success');
             }
 
-            labCompleteTest(patientId) {
+            async labCompleteTest(patientId) {
                 await this.updatePatientStatus(patientId, 'completed');
             }
 
@@ -2469,7 +2469,7 @@
                 this.updatePharmacyActivityFeed();
             }
 
-            pharmacyCallNextPatient() {
+            async pharmacyCallNextPatient() {
                 const pharmacist = document.getElementById('pharmacy-pharmacist').value.trim();
                 if (!pharmacist) {
                     this.showToast('Please enter pharmacist name', 'error');
@@ -2528,7 +2528,7 @@
                 this.showToast(`Started dispensing for ${patient.name}`, 'success');
             }
 
-            pharmacyCompleteDispensing(patientId) {
+            async pharmacyCompleteDispensing(patientId) {
                 await this.updatePatientStatus(patientId, 'completed');
             }
 
