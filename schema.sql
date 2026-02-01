@@ -12,6 +12,7 @@ CREATE TABLE patients (
   name VARCHAR(100) NOT NULL,
   condition TEXT,
   station VARCHAR(50) NOT NULL,
+  phone VARCHAR(20),
   status VARCHAR(20) DEFAULT 'waiting',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
