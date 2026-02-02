@@ -598,6 +598,43 @@
             color: #0c5460;
         }
 
+        .daily-registrations {
+            margin-top: 15px;
+        }
+
+        .total-registrations {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: var(--light);
+            border-radius: 8px;
+        }
+
+        .registrations-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .registration-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            background: var(--light);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .registration-name {
+            font-weight: 500;
+        }
+
+        .registration-time {
+            color: var(--gray);
+            font-size: 12px;
+        }
+
         .action-buttons {
             display: flex;
             gap: 6px;
@@ -1263,6 +1300,20 @@
                         <div class="stat-item">
                             <div class="stat-value" id="opd-lab">0</div>
                             <div class="stat-label">In Lab</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Registrations -->
+                <div class="stats-card">
+                    <h3><i class="fas fa-calendar-day"></i> Today's Registrations</h3>
+                    <div class="daily-registrations">
+                        <div class="total-registrations">
+                            <div class="stat-value" id="daily-total">0</div>
+                            <div class="stat-label">Total Patients</div>
+                        </div>
+                        <div class="registrations-list" id="daily-list">
+                            <!-- List will be populated -->
                         </div>
                     </div>
                 </div>
@@ -2071,9 +2122,34 @@
                 
                 // Update activity feed
                 this.updateOPDActivityFeed();
+
+                // Update daily registrations
+                this.updateDailyRegistrations();
             }
 
-            setupStationFilters() {
+            updateDailyRegistrations() {
+                const today = new Date().toDateString();
+                const todayPatients = this.patients.filter(p => new Date(p.created_at).toDateString() === today);
+                
+                document.getElementById('daily-total').textContent = todayPatients.length;
+                
+                const listContainer = document.getElementById('daily-list');
+                listContainer.innerHTML = '';
+                
+                if (todayPatients.length === 0) {
+                    listContainer.innerHTML = '<div class="empty-state" style="padding: 20px; text-align: center; color: var(--gray);">No registrations today</div>';
+                } else {
+                    todayPatients.slice(-10).reverse().forEach(patient => { // Show last 10
+                        const item = document.createElement('div');
+                        item.className = 'registration-item';
+                        item.innerHTML = `
+                            <div class="registration-name">${patient.name}</div>
+                            <div class="registration-time">${this.getTimeAgo(patient.created_at)}</div>
+                        `;
+                        listContainer.appendChild(item);
+                    });
+                }
+            }
                 const stations = ['ALL', 'TRIAGE', 'CLINIC', 'LAB', 'PHARMACY', 'RADIOLOGY', 'CASHIER'];
                 const container = document.getElementById('opd-filter-buttons');
                 
@@ -2140,7 +2216,7 @@
                 // Get lab patients
                 const labPatients = this.patients.filter(p => p.currentStation === 'LAB');
                 const waitingPatients = labPatients.filter(p => p.status === 'WAITING');
-                const activePatients = labPatients.filter(p => p.status === 'IN_SERVICE');
+                const activePatients = labPatients.filter(p => p.status === 'active' || p.status === 'IN_SERVICE');
                 
                 // Update counts
                 document.getElementById('lab-queue-count').textContent = `${waitingPatients.length} Patients`;
@@ -2186,8 +2262,8 @@
                             <td>${this.getTimeAgo(patient.registeredAt)}</td>
                             <td>
                                 <div class="action-buttons">
-                                    <button class="action-btn" onclick="queueSystem.labStartTest(${patient.id})">
-                                        <i class="fas fa-play"></i> Start
+                                    <button class="action-btn" onclick="queueSystem.labCallPatient(${patient.id})">
+                                        <i class="fas fa-bullhorn"></i> Call
                                     </button>
                                 </div>
                             </td>
@@ -2226,9 +2302,14 @@
                             <td>${patient.testStartedAt ? this.getTimeAgo(patient.testStartedAt) : 'Just started'}</td>
                             <td>
                                 <div class="action-buttons">
-                                    <button class="action-btn" onclick="queueSystem.labCompleteTest(${patient.id})">
-                                        <i class="fas fa-check"></i> Complete
-                                    </button>
+                                    ${patient.status === 'active' ? 
+                                        `<button class="action-btn" onclick="queueSystem.labStartTest(${patient.id})">
+                                            <i class="fas fa-play"></i> Start
+                                        </button>` :
+                                        `<button class="action-btn" onclick="queueSystem.labCompleteTest(${patient.id})">
+                                            <i class="fas fa-check"></i> Finish
+                                        </button>`
+                                    }
                                 </div>
                             </td>
                         `;
@@ -2243,32 +2324,14 @@
                 this.updateLabActivityFeed();
             }
 
-            async labCallNextPatient() {
-                const technician = document.getElementById('lab-technician').value.trim();
-                if (!technician) {
-                    this.showToast('Please enter technician name', 'error');
-                    return;
-                }
+            async labCallPatient(patientId) {
+                const patient = this.patients.find(p => p.id == patientId);
+                if (!patient) return;
                 
-                const waitingPatients = this.patients.filter(p => 
-                    p.currentStation === 'LAB' && 
-                    p.status === 'WAITING'
-                );
-                
-                if (waitingPatients.length === 0) {
-                    this.showToast('No patients waiting in lab queue', 'warning');
-                    return;
-                }
-                
-                // Sort by priority then wait time
-                waitingPatients.sort((a, b) => {
-                    if (a.priority !== b.priority) return a.priority - b.priority;
-                    return new Date(a.registeredAt) - new Date(b.registeredAt);
-                });
-                
-                const nextPatient = waitingPatients[0];
-                this.speak(`Patient ${nextPatient.name}, ticket number ${nextPatient.id}, please proceed to Laboratory`);
-                await this.updatePatientStatus(nextPatient.id, 'called');
+                this.speak(`Patient ${patient.name}, ticket number ${patient.id}, please proceed to Laboratory`);
+                await this.updatePatientStatus(patientId, 'active');
+                this.refreshLabDisplay();
+                this.showToast(`Called ${patient.name} to Laboratory`, 'success');
             }
 
             labStartTest(patientId) {
@@ -2303,7 +2366,24 @@
             }
 
             async labCompleteTest(patientId) {
-                await this.updatePatientStatus(patientId, 'completed');
+                const patient = this.patients.find(p => p.id == patientId);
+                if (!patient) return;
+                
+                patient.status = 'waiting';
+                patient.station = 'PHARMACY';
+                
+                try {
+                    await fetch(`${this.API_BASE}/queue/${patientId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: 'waiting', station: 'PHARMACY' })
+                    });
+                    await this.loadPatients();
+                    this.showToast(`Completed test for ${patient.name}, routed to Pharmacy`, 'success');
+                } catch (error) {
+                    console.error('Error completing test:', error);
+                    this.showToast('Error completing test', 'error');
+                }
             }
 
             labCompleteAndRoute() {
