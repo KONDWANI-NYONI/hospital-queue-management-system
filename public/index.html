@@ -1964,7 +1964,7 @@
                     age: age,
                     gender: gender,
                     condition: complaint,
-                    station: 'OPD',
+                    station: this.initialStation,
                     phone: phone
                 };
                 
@@ -1979,11 +1979,11 @@
                     // Log activity
                     this.logActivity(
                         'OPD',
-                        `Patient ${name} registered`,
+                        `Patient ${name} registered and routed to ${this.initialStation}`,
                         'fas fa-user-plus'
                     );
                     
-                    this.showToast(`Registered ${name}`, 'success');
+                    this.showToast(`Registered and routed ${name} to ${this.initialStation}`, 'success');
                 } else {
                     this.showToast('Failed to register patient', 'error');
                 }
