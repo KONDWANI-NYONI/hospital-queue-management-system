@@ -1215,15 +1215,7 @@
                             <h3><i class="fas fa-route"></i> Route to Station</h3>
                             <div class="routing-form">
                                 <div class="station-options">
-                                    <div class="station-option" data-station="TRIAGE" onclick="selectInitialStation('TRIAGE')">
-                                        <i class="fas fa-stethoscope"></i>
-                                        Triage
-                                    </div>
-                                    <div class="station-option" data-station="CLINIC" onclick="selectInitialStation('CLINIC')">
-                                        <i class="fas fa-clinic-medical"></i>
-                                        Clinic
-                                    </div>
-                                    <div class="station-option" data-station="LAB" onclick="selectInitialStation('LAB')">
+                                    <div class="station-option selected" data-station="LAB" onclick="selectInitialStation('LAB')">
                                         <i class="fas fa-flask"></i>
                                         Lab
                                     </div>
@@ -1696,7 +1688,7 @@
                 this.currentStation = null;
                 this.patients = [];
                 this.activityLog = [];
-                this.initialStation = 'TRIAGE'; // Default initial station
+                this.initialStation = 'LAB'; // Default initial station
                 this.API_BASE = '/api';
                 
                 this.init();
@@ -1994,7 +1986,7 @@
                 document.querySelectorAll('.station-option').forEach(option => {
                     option.classList.remove('selected');
                 });
-                this.initialStation = 'TRIAGE'; // Reset to default
+                this.initialStation = 'LAB'; // Reset to default
             }
 
             reassignPatient() {
