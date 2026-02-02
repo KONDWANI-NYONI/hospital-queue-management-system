@@ -1724,6 +1724,27 @@
                 }
             }
 
+            async routePatient(id) {
+                const patient = this.patients.find(p => p.id == id);
+                if (!patient) return;
+                
+                const newStation = prompt(`Route ${patient.name} to which station? (TRIAGE, CLINIC, LAB, PHARMACY, RADIOLOGY, CASHIER)`, patient.station);
+                if (newStation && newStation !== patient.station) {
+                    try {
+                        await fetch(`${this.API_BASE}/queue/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ station: newStation })
+                        });
+                        await this.loadPatients();
+                        this.showToast(`Routed ${patient.name} to ${newStation}`, 'success');
+                    } catch (error) {
+                        console.error('Error routing patient:', error);
+                        this.showToast('Error routing patient', 'error');
+                    }
+                }
+            }
+
             updateAllClocks() {
                 const now = new Date();
                 const timeString = now.toLocaleTimeString([], { 
@@ -1892,7 +1913,7 @@
                     age: age,
                     gender: gender,
                     condition: complaint,
-                    station: this.initialStation,
+                    station: 'OPD',
                     phone: phone
                 };
                 
@@ -2031,6 +2052,9 @@
                                 <div class="action-buttons">
                                     <button class="action-btn" onclick="queueSystem.viewPatientDetails(${patient.id})">
                                         <i class="fas fa-eye"></i> View
+                                    </button>
+                                    <button class="action-btn" onclick="queueSystem.routePatient(${patient.id})">
+                                        <i class="fas fa-route"></i> Route
                                     </button>
                                     <button class="action-btn delete-btn" onclick="queueSystem.deletePatient(${patient.id})">
                                         <i class="fas fa-trash"></i> Delete

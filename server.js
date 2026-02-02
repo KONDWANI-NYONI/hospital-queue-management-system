@@ -77,9 +77,22 @@ app.post('/api/queue', async (req, res) => {
 
 app.put('/api/queue/:id', async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, station } = req.body;
   try {
-    await pool.query('UPDATE patients SET status = $1 WHERE id = $2', [status, id]);
+    let query = 'UPDATE patients SET ';
+    let params = [];
+    if (status) {
+      query += 'status = $1';
+      params.push(status);
+    }
+    if (station) {
+      if (params.length) query += ', ';
+      query += 'station = $' + (params.length + 1);
+      params.push(station);
+    }
+    query += ' WHERE id = $' + (params.length + 1);
+    params.push(id);
+    await pool.query(query, params);
     res.status(200).send();
   } catch (err) {
     res.status(500).json({ error: err.message });
